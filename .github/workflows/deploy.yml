@@ -35,7 +35,7 @@ jobs:
             cd ..
 
             # Copy frontend build to Nginx web root
-            sudo cp -r frontend/dist/. /var/www/performancelab/
+            sudo cp -r frontend/dist/* /var/www/performancelab/
 
             # Restart the Go API service
             sudo systemctl restart performancelab
