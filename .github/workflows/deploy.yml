@@ -17,6 +17,25 @@ jobs:
           username: ${{ secrets.LIGHTSAIL_USER }}
           key: ${{ secrets.LIGHTSAIL_SSH_KEY }}
           script: |
+            set -e
             cd ${{ secrets.DEPLOY_PATH }}
+
+            # Pull latest code
             git pull origin main
-            systemctl restart ${{ secrets.SERVICE_NAME }}
+
+            # Build Go backend
+            cd backend
+            go build -o performancelab .
+            cd ..
+
+            # Build React frontend
+            cd frontend
+            npm ci
+            npm run build
+            cd ..
+
+            # Copy frontend build to Nginx web root
+            sudo cp -r frontend/dist/. /var/www/performancelab/
+
+            # Restart the Go API service
+            sudo systemctl restart performancelab
