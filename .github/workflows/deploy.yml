@@ -21,8 +21,10 @@ jobs:
             export PATH=$PATH:/usr/local/go/bin
             cd ${{ secrets.DEPLOY_PATH }}
 
-            # Pull latest code
-            git pull origin main
+            # Pull latest code (reset any local changes on the server first)
+            git fetch origin main
+            git reset --hard origin/main
+            git clean -fd
 
             # Build Go backend
             cd backend
