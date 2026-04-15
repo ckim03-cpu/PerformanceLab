@@ -3,7 +3,10 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
 	"time"
+
+	"github.com/go-chi/chi/v5"
 )
 
 type Habit struct {
@@ -96,4 +99,66 @@ func (h *Handler) LogHabit(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, http.StatusOK, map[string]string{"status": "logged"})
+}
+
+type updateHabitRequest struct {
+	Name string `json:"name"`
+}
+
+// UpdateHabit handles PUT /api/habits/:id
+func (h *Handler) UpdateHabit(w http.ResponseWriter, r *http.Request) {
+	userID := userIDFromContext(r.Context())
+	id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid habit id")
+		return
+	}
+
+	var req updateHabitRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	if req.Name == "" {
+		writeError(w, http.StatusBadRequest, "name is required")
+		return
+	}
+
+	result, err := h.db.ExecContext(r.Context(),
+		"UPDATE habits SET name = ? WHERE id = ? AND user_id = ?", req.Name, id, userID)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to update habit")
+		return
+	}
+	n, _ := result.RowsAffected()
+	if n == 0 {
+		writeError(w, http.StatusNotFound, "habit not found")
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{"data": map[string]any{"id": id, "name": req.Name}})
+}
+
+// DeleteHabit handles DELETE /api/habits/:id
+func (h *Handler) DeleteHabit(w http.ResponseWriter, r *http.Request) {
+	userID := userIDFromContext(r.Context())
+	id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid habit id")
+		return
+	}
+
+	result, err := h.db.ExecContext(r.Context(),
+		"DELETE FROM habits WHERE id = ? AND user_id = ?", id, userID)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to delete habit")
+		return
+	}
+	n, _ := result.RowsAffected()
+	if n == 0 {
+		writeError(w, http.StatusNotFound, "habit not found")
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]string{"status": "deleted"})
 }

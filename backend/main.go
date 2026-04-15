@@ -57,9 +57,12 @@ func main() {
 		r.Use(h.AuthMiddleware)
 		r.Get("/api/habits", h.GetHabits)
 		r.Post("/api/habits", h.CreateHabit)
+		r.Put("/api/habits/{id}", h.UpdateHabit)
+		r.Delete("/api/habits/{id}", h.DeleteHabit)
 		r.Post("/api/habit-log", h.LogHabit)
 		r.Get("/api/workouts", h.GetWorkouts)
 		r.Post("/api/workouts", h.CreateWorkout)
+		r.Delete("/api/workouts/{id}", h.DeleteWorkout)
 	})
 
 	log.Printf("server listening on :%s", port)

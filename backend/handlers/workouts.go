@@ -3,7 +3,10 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
 	"time"
+
+	"github.com/go-chi/chi/v5"
 )
 
 type Workout struct {
@@ -77,4 +80,28 @@ func (h *Handler) CreateWorkout(w http.ResponseWriter, r *http.Request) {
 		"weight":    req.Weight,
 		"createdAt": time.Now(),
 	}})
+}
+
+// DeleteWorkout handles DELETE /api/workouts/:id
+func (h *Handler) DeleteWorkout(w http.ResponseWriter, r *http.Request) {
+	userID := userIDFromContext(r.Context())
+	id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid workout id")
+		return
+	}
+
+	result, err := h.db.ExecContext(r.Context(),
+		"DELETE FROM workouts WHERE id = ? AND user_id = ?", id, userID)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to delete workout")
+		return
+	}
+	n, _ := result.RowsAffected()
+	if n == 0 {
+		writeError(w, http.StatusNotFound, "workout not found")
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]string{"status": "deleted"})
 }
