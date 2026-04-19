@@ -12,6 +12,7 @@ export default function Workouts() {
   const [exercise, setExercise] = useState('')
   const [reps, setReps] = useState('')
   const [weight, setWeight] = useState('')
+  const [deletingId, setDeletingId] = useState(null)
 
   const { data: workouts = [], isLoading, error } = useQuery({
     queryKey: ['workouts'],
@@ -30,7 +31,11 @@ export default function Workouts() {
 
   const deleteMutation = useMutation({
     mutationFn: (id) => api.deleteWorkout(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['workouts'] }),
+    onMutate: (id) => setDeletingId(id),
+    onSettled: () => {
+      setDeletingId(null)
+      queryClient.invalidateQueries({ queryKey: ['workouts'] })
+    },
   })
 
   function handleSubmit(e) {
@@ -40,7 +45,7 @@ export default function Workouts() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
+    <main id="main-content" className="max-w-4xl mx-auto px-4 py-8">
       <h1 className="text-2xl font-bold text-gray-900 mb-6">Workouts</h1>
 
       {/* Log a set */}
@@ -51,8 +56,11 @@ export default function Workouts() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Exercise</label>
+              <label htmlFor="exercise" className="block text-sm font-medium text-gray-700 mb-1">
+                Exercise
+              </label>
               <Input
+                id="exercise"
                 placeholder="e.g. Squat, Bench Press, Deadlift..."
                 value={exercise}
                 onChange={e => setExercise(e.target.value)}
@@ -61,8 +69,11 @@ export default function Workouts() {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Reps</label>
+                <label htmlFor="reps" className="block text-sm font-medium text-gray-700 mb-1">
+                  Reps
+                </label>
                 <Input
+                  id="reps"
                   type="number"
                   placeholder="0"
                   value={reps}
@@ -72,10 +83,12 @@ export default function Workouts() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Weight <span className="text-gray-400 font-normal">(lbs, optional)</span>
+                <label htmlFor="weight" className="block text-sm font-medium text-gray-700 mb-1">
+                  Weight{' '}
+                  <span className="text-gray-400 font-normal">(lbs, optional)</span>
                 </label>
                 <Input
+                  id="weight"
                   type="number"
                   placeholder="0"
                   value={weight}
@@ -90,11 +103,11 @@ export default function Workouts() {
               disabled={logMutation.isPending || !exercise.trim() || !reps}
               className="gap-1.5"
             >
-              <Plus size={16} />
+              <Plus size={16} aria-hidden="true" />
               {logMutation.isPending ? 'Saving...' : 'Log set'}
             </Button>
             {logMutation.isError && (
-              <p className="text-red-500 text-sm">{logMutation.error.message}</p>
+              <p role="alert" className="text-red-500 text-sm">{logMutation.error.message}</p>
             )}
           </form>
         </CardContent>
@@ -107,12 +120,12 @@ export default function Workouts() {
         </CardHeader>
         <CardContent>
           {error ? (
-            <div className="flex items-center gap-2 text-red-600 text-sm">
-              <AlertCircle size={16} />
+            <div role="alert" className="flex items-center gap-2 text-red-600 text-sm">
+              <AlertCircle size={16} aria-hidden="true" />
               Failed to load workouts.
             </div>
           ) : isLoading ? (
-            <div className="space-y-3">
+            <div aria-label="Loading workouts" className="space-y-3">
               {[1, 2, 3].map(i => (
                 <div key={i} className="h-10 bg-gray-100 rounded-lg animate-pulse" />
               ))}
@@ -131,11 +144,11 @@ export default function Workouts() {
                   </span>
                   <button
                     onClick={() => deleteMutation.mutate(w.id)}
-                    disabled={deleteMutation.isPending}
-                    className="p-1.5 text-gray-400 hover:text-red-500 rounded-md hover:bg-red-50 transition-colors"
-                    title="Delete"
+                    disabled={deletingId === w.id}
+                    aria-label={`Delete ${w.exercise} set`}
+                    className="p-1.5 text-gray-400 hover:text-red-500 rounded-md hover:bg-red-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 disabled:opacity-50 disabled:pointer-events-none"
                   >
-                    <Trash2 size={14} />
+                    <Trash2 size={14} aria-hidden="true" />
                   </button>
                 </li>
               ))}
@@ -143,6 +156,6 @@ export default function Workouts() {
           )}
         </CardContent>
       </Card>
-    </div>
+    </main>
   )
 }

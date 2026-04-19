@@ -28,7 +28,7 @@ const features = [
 
 export default function Home() {
   return (
-    <div className="min-h-[calc(100vh-56px)]">
+    <main id="main-content" className="min-h-[calc(100vh-56px)]">
       {/* Hero */}
       <div className="bg-gradient-to-br from-indigo-50 via-white to-violet-50 py-24 px-4 text-center">
         <div className="inline-flex items-center gap-2 bg-indigo-100 text-indigo-700 text-xs font-semibold px-3 py-1 rounded-full mb-6">
@@ -68,6 +68,6 @@ export default function Home() {
           ))}
         </div>
       </div>
-    </div>
+    </main>
   )
 }

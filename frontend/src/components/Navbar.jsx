@@ -12,6 +12,13 @@ export default function Navbar() {
 
   return (
     <nav className="bg-gray-950 border-b border-gray-800 sticky top-0 z-50">
+      {/* Skip link — visible only on keyboard focus */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:bg-indigo-600 focus:text-white focus:px-3 focus:py-1.5 focus:rounded-md focus:text-sm focus:font-medium"
+      >
+        Skip to main content
+      </a>
       <div className="max-w-5xl mx-auto px-4 h-14 flex items-center gap-6">
         <NavLink
           to="/"

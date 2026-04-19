@@ -10,13 +10,17 @@ function PrivateRoute({ children }) {
   return localStorage.getItem('token') ? children : <Navigate to="/login" replace />
 }
 
+function PublicOnlyRoute({ children }) {
+  return localStorage.getItem('token') ? <Navigate to="/dashboard" replace /> : children
+}
+
 export default function App() {
   return (
     <BrowserRouter>
       <Navbar />
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/login" element={<Login />} />
+        <Route path="/login" element={<PublicOnlyRoute><Login /></PublicOnlyRoute>} />
         <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
         <Route path="/habits" element={<PrivateRoute><Habits /></PrivateRoute>} />
         <Route path="/workouts" element={<PrivateRoute><Workouts /></PrivateRoute>} />

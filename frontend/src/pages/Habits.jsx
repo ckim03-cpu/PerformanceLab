@@ -11,6 +11,8 @@ export default function Habits() {
   const [newName, setNewName] = useState('')
   const [editingId, setEditingId] = useState(null)
   const [editName, setEditName] = useState('')
+  const [deletingId, setDeletingId] = useState(null)
+  // logged tracks which habits have been marked done this session
   const [logged, setLogged] = useState(new Set())
 
   const { data: habits = [], isLoading, error } = useQuery({
@@ -36,7 +38,11 @@ export default function Habits() {
 
   const deleteMutation = useMutation({
     mutationFn: (id) => api.deleteHabit(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['habits'] }),
+    onMutate: (id) => setDeletingId(id),
+    onSettled: () => {
+      setDeletingId(null)
+      queryClient.invalidateQueries({ queryKey: ['habits'] })
+    },
   })
 
   const logMutation = useMutation({
@@ -56,7 +62,7 @@ export default function Habits() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
+    <main id="main-content" className="max-w-4xl mx-auto px-4 py-8">
       <h1 className="text-2xl font-bold text-gray-900 mb-6">Habits</h1>
 
       {/* Add habit */}
@@ -72,23 +78,26 @@ export default function Habits() {
             }}
             className="flex gap-3"
           >
-            <Input
-              placeholder="e.g. Morning run, Read 30 minutes..."
-              value={newName}
-              onChange={e => setNewName(e.target.value)}
-              className="flex-1"
-            />
+            <div className="flex-1">
+              <label htmlFor="new-habit-name" className="sr-only">Habit name</label>
+              <Input
+                id="new-habit-name"
+                placeholder="e.g. Morning run, Read 30 minutes..."
+                value={newName}
+                onChange={e => setNewName(e.target.value)}
+              />
+            </div>
             <Button
               type="submit"
               disabled={addMutation.isPending || !newName.trim()}
               className="gap-1.5 shrink-0"
             >
-              <Plus size={16} />
+              <Plus size={16} aria-hidden="true" />
               Add habit
             </Button>
           </form>
           {addMutation.isError && (
-            <p className="text-red-500 text-sm mt-2">{addMutation.error.message}</p>
+            <p role="alert" className="text-red-500 text-sm mt-2">{addMutation.error.message}</p>
           )}
         </CardContent>
       </Card>
@@ -100,12 +109,12 @@ export default function Habits() {
         </CardHeader>
         <CardContent>
           {error ? (
-            <div className="flex items-center gap-2 text-red-600 text-sm">
-              <AlertCircle size={16} />
+            <div role="alert" className="flex items-center gap-2 text-red-600 text-sm">
+              <AlertCircle size={16} aria-hidden="true" />
               Failed to load habits.
             </div>
           ) : isLoading ? (
-            <div className="space-y-3">
+            <div aria-label="Loading habits" className="space-y-3">
               {[1, 2, 3].map(i => (
                 <div key={i} className="h-10 bg-gray-100 rounded-lg animate-pulse" />
               ))}
@@ -118,7 +127,9 @@ export default function Habits() {
                 <li key={h.id} className="flex items-center gap-3 py-3">
                   {editingId === h.id ? (
                     <form onSubmit={submitEdit} className="flex-1 flex items-center gap-2">
+                      <label htmlFor={`edit-habit-${h.id}`} className="sr-only">Habit name</label>
                       <Input
+                        id={`edit-habit-${h.id}`}
                         value={editName}
                         onChange={e => setEditName(e.target.value)}
                         className="flex-1"
@@ -142,19 +153,19 @@ export default function Habits() {
 
                       <button
                         onClick={() => startEdit(h)}
-                        className="p-1.5 text-gray-400 hover:text-gray-600 rounded-md hover:bg-gray-100 transition-colors"
-                        title="Rename"
+                        aria-label={`Rename "${h.name}"`}
+                        className="p-1.5 text-gray-400 hover:text-gray-600 rounded-md hover:bg-gray-100 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
                       >
-                        <Pencil size={14} />
+                        <Pencil size={14} aria-hidden="true" />
                       </button>
 
                       <button
                         onClick={() => deleteMutation.mutate(h.id)}
-                        disabled={deleteMutation.isPending}
-                        className="p-1.5 text-gray-400 hover:text-red-500 rounded-md hover:bg-red-50 transition-colors"
-                        title="Delete"
+                        disabled={deletingId === h.id}
+                        aria-label={`Delete "${h.name}"`}
+                        className="p-1.5 text-gray-400 hover:text-red-500 rounded-md hover:bg-red-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 disabled:opacity-50 disabled:pointer-events-none"
                       >
-                        <Trash2 size={14} />
+                        <Trash2 size={14} aria-hidden="true" />
                       </button>
 
                       <Button
@@ -165,7 +176,7 @@ export default function Habits() {
                         className="gap-1.5 min-w-[100px]"
                       >
                         {logged.has(h.id) ? (
-                          <><Check size={14} /> Done</>
+                          <><Check size={14} aria-hidden="true" /> Done</>
                         ) : (
                           'Mark done'
                         )}
@@ -178,6 +189,6 @@ export default function Habits() {
           )}
         </CardContent>
       </Card>
-    </div>
+    </main>
   )
 }
